@@ -7,7 +7,7 @@ from basicsr.archs import build_network
 from basicsr.metrics import calculate_metric
 from basicsr.losses import build_loss
 from basicsr.utils import get_root_logger, imwrite, tensor2img
-from xrestormer.models import lr_scheduler as lr_scheduler
+from Wnet.models import lr_scheduler as lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
 import math
 from tqdm import tqdm

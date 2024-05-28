@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=3 python xrestormer/test.py -opt options/test/005_xrestormer_dehaze.yml

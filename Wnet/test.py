@@ -1,9 +1,9 @@
 # flake8: noqa
 import os.path as osp
 
-import xrestormer.archs
-import xrestormer.data
-import xrestormer.models
+import Wnet.archs
+import Wnet.data
+import Wnet.models
 from basicsr.test import test_pipeline
 
 if __name__ == '__main__':

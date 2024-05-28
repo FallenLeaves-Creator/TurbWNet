@@ -1,10 +1,10 @@
 # flake8: noqa
 import os.path as osp
 
-import xrestormer.archs
-import xrestormer.data
-import xrestormer.losses
-import xrestormer.models
+import Wnet.archs
+import Wnet.data
+import Wnet.losses
+import Wnet.models
 from basicsr.train import train_pipeline
 
 if __name__ == '__main__':
