@@ -1,0 +1,62 @@
+# general settings
+name: Turbulence_removal
+model_type: Wnet
+scale: 1
+num_gpu: 1
+manual_seed: 123
+padding_size: 16
+# dataset and data loader settings
+datasets:
+  test_1:
+    name: Turb
+    type: TurbImageDataset
+    dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
+    turb_size: 512
+    gt_size: 512
+    io_backend:
+      type: disk
+
+
+# network structures
+network_g:
+  type: Wnet
+  inp_channels: 3
+  dim: 48
+  num_blocks: [2,3,3,2]
+  num_refinement_blocks: 2
+  channel_heads: [1,2,4,8]
+  spatial_heads: [1,2,4,8]
+  overlap_ratio: [0.5,0.5,0.5,0.5]
+  window_size: 8
+  spatial_dim_head: 16
+  ffn_expansion_factor: 2.66
+  bias: False
+  LayerNorm_type: WithBias
+  scale: 1
+
+# path
+path:
+  pretrain_network_g: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/Turbulence_removal/models/net_g_300000.pth
+  strict_load_g: false
+  resume_state: ~
+  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/xrestormer_deblur/visualization
+
+
+val:
+  save_img: true
+  suffix: ~
+  pbar: true
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

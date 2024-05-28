@@ -336,7 +336,6 @@ class XRestormer(nn.Module):
         bias = False,
         ffn_expansion_factor = 2.66,
         LayerNorm_type = 'WithBias',   ## Other option 'BiasFree'
-        dual_pixel_task = False,        ## True for dual-pixel defocus deblurring only. Also set inp_channels=6
         scale = 1
     ):
 
@@ -405,26 +404,146 @@ class XRestormer(nn.Module):
         out_dec_level1 = self.decoder_level1(inp_dec_level1)
 
         out_dec_level1 = self.refinement(out_dec_level1)
-        out_dec_level1 = self.output(out_dec_level1) + inp_img
+        out_dec_level1 = self.output(out_dec_level1)
 
         return out_dec_level1
 
-if __name__ == "__main__":
-    model = XRestormer(
-        inp_channels=3,
-        out_channels=3,
-        dim = 48,
-        num_blocks = [2,4,4,4],
-        num_refinement_blocks = 4,
-        channel_heads= [1,1,1,1],
-        spatial_heads= [1,2,4,8],
-        overlap_ratio= [0.5, 0.5, 0.5, 0.5],
-        ffn_expansion_factor = 2.66,
-        bias = False,
-        LayerNorm_type = 'WithBias',   ## Other option 'BiasFree'
-        dual_pixel_task = False,        ## True for dual-pixel defocus deblurring only. Also set inp_channels=6
-        scale = 1,
-        )
 
-    # torchstat
-    stat(model, (3, 512, 512))
+class HookTool:
+    def __init__(self):
+        self.fea = None
+
+    def hook_fun(self, module, fea_in, fea_out):
+        self.fea = fea_out
+
+@ARCH_REGISTRY.register()
+class Wnet(nn.Module):
+    def hook_fun(self, module, fea_in, fea_out):
+        self.fea = fea_out
+    def __init__(self,
+        inp_channels=3,
+        dim = 48,
+        num_blocks = [4,6,6,8],
+        num_refinement_blocks = 4,
+        channel_heads = [1,2,4,8],
+        spatial_heads = [2,2,3,4],
+        overlap_ratio=[0.5, 0.5, 0.5, 0.5],
+        window_size = 8,
+        spatial_dim_head = 16,
+        bias = False,
+        ffn_expansion_factor = 2.66,
+        LayerNorm_type = 'WithBias',   ## Other option 'BiasFree'
+        scale = 1,
+        deturb_path=False,
+        detilt_path=False,
+    ):
+
+        super(Wnet, self).__init__()
+        print("Initializing Wnet")
+        self.deblur_model=XRestormer(inp_channels=inp_channels,
+        out_channels=3,
+        dim=dim,
+        num_blocks = num_blocks,
+        num_refinement_blocks = num_refinement_blocks,
+        channel_heads = channel_heads,
+        spatial_heads = spatial_heads,
+        overlap_ratio= overlap_ratio,
+        window_size = window_size,
+        spatial_dim_head = spatial_dim_head,
+        bias = bias,
+        ffn_expansion_factor = ffn_expansion_factor,
+        LayerNorm_type = LayerNorm_type,
+        scale = scale)
+
+        if deturb_path:
+            self.deblur_model.load_state_dict(
+                torch.load(deturb_path)["params"]
+            )
+
+        for n, m in self.deblur_model.named_modules():
+            if n.endswith("refinement"):
+                self.deblur_Hook = HookTool()
+                m.register_forward_hook(self.deblur_Hook.hook_fun)
+
+        # self.deblur_model.requires_grad=False
+
+        self.detilt_model=XRestormer( inp_channels=inp_channels,
+        out_channels=2,
+        dim=dim,
+        num_blocks = num_blocks,
+        num_refinement_blocks = num_refinement_blocks,
+        channel_heads = channel_heads,
+        spatial_heads = spatial_heads,
+        overlap_ratio= overlap_ratio,
+        window_size = window_size,
+        spatial_dim_head = spatial_dim_head,
+        bias = bias,
+        ffn_expansion_factor = ffn_expansion_factor,
+        LayerNorm_type = LayerNorm_type,
+        scale = scale)
+
+        if detilt_path:
+            self.detilt_model.load_state_dict(
+                torch.load(detilt_path)["params"]
+            )
+
+        # self.deblur_model.requires_grad=False
+        refinement=[]
+        for i in range(num_refinement_blocks):
+            refinement.append(TransformerBlock(dim=dim*2**1, window_size = window_size, overlap_ratio=overlap_ratio[0],  num_channel_heads=channel_heads[0], num_spatial_heads=spatial_heads[0], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type))
+        refinement.append(nn.Conv2d(dim*2**1,3,kernel_size=3, stride=1, padding=1, bias=bias))
+        self.final_refine = nn.Sequential(*refinement)
+        # self.final_refine=nn.Sequential(
+        #     nn.PixelShuffle(2),
+        #     nn.Conv2d(int(dim/2),3,kernel_size=3, stride=1, padding=1, bias=bias)
+        # )
+
+
+    def flow_warp(self,
+                x,
+                flow,
+                interpolation='bilinear',
+                padding_mode='border',
+                align_corners=True):
+        """Warp an image or a feature map with optical flow.
+        Args:
+            x (Tensor): Tensor with size (n, c, h, w).
+            flow (Tensor): Tensor with size (n, h, w, 2). The last dimension is
+                a two-channel, denoting the width and height relative offsets.
+                Note that the values are not normalized to [-1, 1].
+            interpolation (str): Interpolation mode: 'nearest' or 'bilinear'.
+                Default: 'bilinear'.
+            padding_mode (str): Padding mode: 'zeros' or 'border' or 'reflection'.
+                Default: 'zeros'.
+            align_corners (bool): Whether align corners. Default: True.
+        Returns:
+            Tensor: Warped image or feature map.
+        """
+        if x.size()[-2:] != flow.size()[1:3]:
+            raise ValueError(f'The spatial sizes of input ({x.size()[-2:]}) and '
+                            f'flow ({flow.size()[1:3]}) are not the same.')
+        _, _, h, w = x.size()
+        # create mesh grid
+        grid_y, grid_x = torch.meshgrid(torch.arange(0, h), torch.arange(0, w))
+        grid = torch.stack((grid_x, grid_y), 2).type_as(x)  # (h, w, 2)
+        grid.requires_grad = False
+
+        grid_flow = grid + flow
+        # scale grid_flow to [-1,1]
+        grid_flow_x = 2.0 * grid_flow[:, :, :, 0] / max(w - 1, 1) - 1.0
+        grid_flow_y = 2.0 * grid_flow[:, :, :, 1] / max(h - 1, 1) - 1.0
+        grid_flow = torch.stack((grid_flow_x, grid_flow_y), dim=3)  # n * h * w * 2
+        output = F.grid_sample(
+            x,
+            grid_flow,
+            mode=interpolation,
+            padding_mode=padding_mode,
+            align_corners=align_corners)
+        return output
+
+    def forward(self, inp_img):
+        deblur_result=self.deblur_model(inp_img)
+        detilt_flow=self.detilt_model(deblur_result)
+        # output=self.flow_warp(deblur_result,detilt_flow.permute(0,2,3,1))
+        output=self.final_refine(self.flow_warp(self.deblur_Hook.fea,detilt_flow.permute(0,2,3,1)))
+        return output
