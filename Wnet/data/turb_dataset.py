@@ -49,8 +49,9 @@ def tri_paths_from_folder(folders, keys, filename_tmpl):
             input_path = osp.join(input_folder, input_name)
             tilt_path = osp.join(tilt_folder,tilt_name)
             tilt_flow_field_path = osp.join(tilt_folder,tilt_flow_field_name)
-            assert tilt_name in tilt_paths, f'{tilt_name} is not in {tilt_key}_paths.'
-            paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path), (f'{tilt_key}_path', tilt_path),(f'{tilt_key}_field_path', tilt_flow_field_path)]))
+            if osp.exists(tilt_flow_field_path):
+                assert tilt_name in tilt_paths, f'{tilt_name} is not in {tilt_key}_paths.'
+                paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path), (f'{tilt_key}_path', tilt_path),(f'{tilt_key}_field_path', tilt_flow_field_path)]))
     return paths
 @DATASET_REGISTRY.register()
 class TurbImageDataset(data.Dataset):
@@ -150,11 +151,9 @@ class TurbImageDataset(data.Dataset):
             normalize(img_turb, self.mean, self.std, inplace=True)
             normalize(img_gt, self.mean, self.std, inplace=True)
 
-        if osp.exists(self.paths[index]['tilt_field_path']):
-            tilt_field=torch.from_numpy(sio.loadmat(self.paths[index]['tilt_field_path'])['D'])
-            return {'turb': img_turb, 'gt': img_gt, 'tilt': img_tilt, 'turb_path': turb_path, 'gt_path': gt_path, 'tilt_path': tilt_path,'tilt_field':tilt_field}
-        else:
-            return {'turb': img_turb, 'gt': img_gt, 'tilt': img_tilt, 'turb_path': turb_path, 'gt_path': gt_path, 'tilt_path': tilt_path}
+
+        tilt_field=torch.from_numpy(sio.loadmat(self.paths[index]['tilt_field_path'])['D'])
+        return {'turb': img_turb, 'gt': img_gt, 'tilt': img_tilt, 'turb_path': turb_path, 'gt_path': gt_path, 'tilt_path': tilt_path,'tilt_field':tilt_field}
 
     def __len__(self):
         return len(self.paths)

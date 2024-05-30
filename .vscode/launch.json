@@ -8,11 +8,11 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "Wnet/test.py",
+            "program": "Wnet/train.py",
             // "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "-opt","options/test/turbulence_detilt.yml",
+                "-opt","options/train/turbulence_detilt.yml",
             ]
         }
     ]

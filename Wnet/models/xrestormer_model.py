@@ -14,16 +14,17 @@ from tqdm import tqdm
 import os.path as osp
 from collections import OrderedDict
 import torch.nn.functional as tf
+import torchvision.transforms as transforms
 
-# sobel_x = torch.tensor([
-#     [-1, 0, 1],
-#     [-2, 0, 2],
-#     [-1, 0, 1]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
+scharr_x = torch.tensor([
+    [-3, 0, 3],
+    [-10, 0, 10],
+    [-3, 0, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
 
-# sobel_y = torch.tensor([
-#     [-1, -2, -1],
-#     [0, 0, 0],
-#     [1, 2, 1]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
+scharr_y = torch.tensor([
+    [-3, -10, -3],
+    [0, 0, 0],
+    [3, 10, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
 
 
 
@@ -255,10 +256,13 @@ class XRestormerModel(SRModel):
 
     def feed_data(self, data):
         if self.task=='detilt':
-            self.lq = data['tilt'].to(self.device)
+            bgr_img = data['tilt'].to(self.device)
+            gray_img= transforms.Grayscale()(bgr_img)
+            gray_img_x_grad=tf.conv2d(gray_img,scharr_x,padding='same')
+            gray_img_y_grad=tf.conv2d(gray_img,scharr_y,padding='same')
+            self.lq=torch.cat((gray_img_x_grad,gray_img_y_grad),dim=1)
             self.tilt = data['tilt'].to(self.device)
-            if 'tilt_field' in data.keys():
-                self.tilt_field=data['tilt_field'].to(self.device)
+            self.tilt_field=data['tilt_field'].to(self.device)
         elif self.task=='deblur':
             self.lq = data['turb'].to(self.device)
             self.tilt = data['tilt'].to(self.device)
@@ -372,17 +376,16 @@ class XRestormerModel(SRModel):
             # output_image=self.output[:,0:3,...]
             if self.task=='detilt':
                 tilt_map=self.output.permute(0,2,3,1)
-                if 'tilt_field' in dir(self):
-                    l_pix=self.cri_tilt_field(tilt_map,self.tilt_field)
-                else:
-                    detilt_image=self.flow_warp(self.tilt, tilt_map)
-                    l_pix=self.cri_pix(detilt_image,self.gt)
+                l_pix_1=self.cri_tilt_field(tilt_map,self.tilt_field)
+                detilt_image=self.flow_warp(self.tilt, tilt_map)
+                l_pix_2=self.cri_pix(detilt_image,self.gt)
+                l_pix=l_pix_1+l_pix_2
                     # l_pix_1 = self.cri_pix(detilt_image,self.gt)
                     # tilted_gt=self.flow_warp(self.gt, -tilt_map)
                     # l_pix_2 = self.cri_pix(tilted_gt,self.tilt)
                     # l_pix=0.5*l_pix_1+0.5*l_pix_2
-                    # loss_dict['tilt_l_pix_1'] = l_pix_1
-                    # loss_dict['tilt_l_pix_2'] = l_pix_2
+                loss_dict['tilt_l_pix_1'] = l_pix_1
+                loss_dict['tilt_l_pix_2'] = l_pix_2
                 loss_dict['tilt_l_pix'] = l_pix
             ######  grad diff map loss####################
             # l_pix=0
