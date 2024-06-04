@@ -1,14 +1,15 @@
 # general settings
-name: xrestormer_deblur
+name: detilt
 model_type: XRestormerModel
 scale: 1
 num_gpu: 1
-manual_seed: 123
+manual_seed: 42
 padding_size: 16
 task: detilt
 # dataset and data loader settings
 datasets:
   train:
+    task: detilt
     name: Turbulence
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/train_static
@@ -33,6 +34,7 @@ datasets:
 
 
   val_1:
+    task: test
     name: Turb_test
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
@@ -76,7 +78,7 @@ train:
     type: CosineContinousAnnealingRestartCyclicLR
     periods: [20000, 200000,300000]
     restart_weights: [1,1,1]
-    eta_mins: [0.0001,0.00005,0.000001]
+    eta_mins: [0.0001,0.00005,0.00001]
 
   mixing_augs:
     mixup: false

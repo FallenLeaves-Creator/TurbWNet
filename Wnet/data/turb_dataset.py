@@ -10,49 +10,7 @@ import cv2
 import scipy.io as sio
 import torch
 
-def tri_paths_from_folder(folders, keys, filename_tmpl):
-    """Generate paired paths from folders.
 
-    Args:
-        folders (list[str]): A list of folder path. The order of list should
-            be [input_folder, gt_folder].
-        keys (list[str]): A list of keys identifying folders. The order should
-            be in consistent with folders, e.g., ['lq', 'gt'].
-        filename_tmpl (str): Template for each filename. Note that the
-            template excludes the file extension. Usually the filename_tmpl is
-            for files in the input folder.
-
-    Returns:
-        list[str]: Returned path list.
-    """
-
-    assert len(keys) == 3, f'The len of keys should be 3 with [input_key, gt_key, tilt_key]. But got {len(keys)}'
-    input_key, gt_key, tilt_key = keys
-
-    # input_paths = list(scandir(input_folder))
-    # gt_paths = list(scandir(gt_folder))
-    # assert len(input_paths) == len(gt_paths), (f'{input_key} and {gt_key} datasets have different number of images: '
-    #                                            f'{len(input_paths)}, {len(gt_paths)}.')
-    paths = []
-    for folder in listdir(folders):
-        gt_path=osp.join(folders, folder, 'gt.jpg')
-        input_folder=osp.join(folders,folder,'turb')
-        input_paths = list(scandir(input_folder))
-        tilt_folder=osp.join(folders,folder,'tilt')
-        tilt_paths = list(scandir(tilt_folder))
-        # assert len(input_paths) == len(tilt_paths), (f'{input_key} and {tilt_key} datasets have different number of images: '
-        #                                            f'{len(input_paths)}, {len(tilt_paths)}.')
-        for input_name in input_paths:
-            basename, ext = osp.splitext(osp.basename(input_name))
-            tilt_name = f'{filename_tmpl.format(basename)}{ext}'
-            tilt_flow_field_name = f'{filename_tmpl.format(basename)}.mat'
-            input_path = osp.join(input_folder, input_name)
-            tilt_path = osp.join(tilt_folder,tilt_name)
-            tilt_flow_field_path = osp.join(tilt_folder,tilt_flow_field_name)
-            if osp.exists(tilt_flow_field_path):
-                assert tilt_name in tilt_paths, f'{tilt_name} is not in {tilt_key}_paths.'
-                paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path), (f'{tilt_key}_path', tilt_path),(f'{tilt_key}_field_path', tilt_flow_field_path)]))
-    return paths
 @DATASET_REGISTRY.register()
 class TurbImageDataset(data.Dataset):
     """Paired image dataset for image restoration.
@@ -80,7 +38,53 @@ class TurbImageDataset(data.Dataset):
         scale (bool): Scale, which will be added automatically.
         phase (str): 'train' or 'val'.
     """
+    def tri_paths_from_folder(self,folders, keys, filename_tmpl):
+        """Generate paired paths from folders.
 
+        Args:
+            folders (list[str]): A list of folder path. The order of list should
+                be [input_folder, gt_folder].
+            keys (list[str]): A list of keys identifying folders. The order should
+                be in consistent with folders, e.g., ['lq', 'gt'].
+            filename_tmpl (str): Template for each filename. Note that the
+                template excludes the file extension. Usually the filename_tmpl is
+                for files in the input folder.
+
+        Returns:
+            list[str]: Returned path list.
+        """
+
+        assert len(keys) == 3, f'The len of keys should be 3 with [input_key, gt_key, tilt_key]. But got {len(keys)}'
+        input_key, gt_key, tilt_key = keys
+
+        # input_paths = list(scandir(input_folder))
+        # gt_paths = list(scandir(gt_folder))
+        # assert len(input_paths) == len(gt_paths), (f'{input_key} and {gt_key} datasets have different number of images: '
+        #                                            f'{len(input_paths)}, {len(gt_paths)}.')
+        paths = []
+        for folder in listdir(folders):
+            gt_path=osp.join(folders, folder, 'gt.jpg')
+            input_folder=osp.join(folders,folder,'turb')
+            input_paths = list(scandir(input_folder))
+            tilt_folder=osp.join(folders,folder,'tilt')
+            tilt_paths = list(scandir(tilt_folder))
+            tilt_flow_field_floder=osp.join(folders,folder,'tilt_field')
+            # assert len(input_paths) == len(tilt_paths), (f'{input_key} and {tilt_key} datasets have different number of images: '
+            #                                            f'{len(input_paths)}, {len(tilt_paths)}.')
+            for input_name in input_paths:
+                basename, ext = osp.splitext(osp.basename(input_name))
+                tilt_name = f'{filename_tmpl.format(basename)}{ext}'
+                tilt_flow_field_name = f'{filename_tmpl.format(basename)}.mat'
+                input_path = osp.join(input_folder, input_name)
+                tilt_path = osp.join(tilt_folder,tilt_name)
+                tilt_flow_field_path = osp.join(tilt_flow_field_floder,tilt_flow_field_name)
+                if self.task=='detilt':
+                    if osp.exists(tilt_flow_field_path):
+                        assert tilt_name in tilt_paths, f'{tilt_name} is not in {tilt_key}_paths.'
+                        paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path), (f'{tilt_key}_path', tilt_path),(f'{tilt_key}_field_path', tilt_flow_field_path)]))
+                else:
+                    paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path), (f'{tilt_key}_path', tilt_path)]))
+        return paths
     def __init__(self, opt):
         super(TurbImageDataset, self).__init__()
         self.opt = opt
@@ -91,6 +95,7 @@ class TurbImageDataset(data.Dataset):
         self.std = opt['std'] if 'std' in opt else None
         self.turb_size= opt['turb_size']
         self.gt_size= opt['gt_size']
+        self.task = opt['task']
 
         self.train_folder= opt['dataroot']
         if 'filename_tmpl' in opt:
@@ -99,7 +104,7 @@ class TurbImageDataset(data.Dataset):
             self.filename_tmpl = '{}'
 
 
-        self.paths = tri_paths_from_folder(self.train_folder, ['turb', 'gt','tilt'], self.filename_tmpl)
+        self.paths = self.tri_paths_from_folder(self.train_folder, ['turb', 'gt','tilt'], self.filename_tmpl)
 
     def __getitem__(self, index):
         if self.file_client is None:
@@ -151,9 +156,11 @@ class TurbImageDataset(data.Dataset):
             normalize(img_turb, self.mean, self.std, inplace=True)
             normalize(img_gt, self.mean, self.std, inplace=True)
 
-
-        tilt_field=torch.from_numpy(sio.loadmat(self.paths[index]['tilt_field_path'])['D'])
-        return {'turb': img_turb, 'gt': img_gt, 'tilt': img_tilt, 'turb_path': turb_path, 'gt_path': gt_path, 'tilt_path': tilt_path,'tilt_field':tilt_field}
+        if self.task=='detilt':
+            tilt_field=torch.from_numpy(sio.loadmat(self.paths[index]['tilt_field_path'])['D'])
+            return {'turb': img_turb, 'gt': img_gt, 'tilt': img_tilt, 'turb_path': turb_path, 'gt_path': gt_path, 'tilt_path': tilt_path,'tilt_field':tilt_field}
+        else:
+            return {'turb': img_turb, 'gt': img_gt, 'tilt': img_tilt, 'turb_path': turb_path, 'gt_path': gt_path, 'tilt_path': tilt_path}
 
     def __len__(self):
         return len(self.paths)

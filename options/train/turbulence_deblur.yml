@@ -1,5 +1,5 @@
 # general settings
-name: xrestormer_deblur
+name: deblur
 model_type: XRestormerModel
 scale: 1
 num_gpu: 1
@@ -9,6 +9,7 @@ task: deblur
 # dataset and data loader settings
 datasets:
   train:
+    task: deblur
     name: Turbulence
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/train_static
@@ -16,26 +17,28 @@ datasets:
     io_backend:
       # type: lmdb
       type: disk
-    size: 256
+    turb_size: 256
+    gt_size: 256
     use_hflip: true
     use_rot: true
 
     # data loader
     use_shuffle: true
-    num_worker_per_gpu: 12
-    batch_size_per_gpu: 3
+    num_worker_per_gpu: 16
+    batch_size_per_gpu: 4
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
     pin_memory: false
 
-    gt_size: 256
 
 
   val_1:
+    task: test
     name: TurbTest
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
-    size: 256
+    turb_size: 256
+    gt_size: 256
     io_backend:
       type: disk
 
@@ -46,8 +49,8 @@ network_g:
   inp_channels: 3
   out_channels: 3
   dim: 48
-  num_blocks: [2,3,3,2]
-  num_refinement_blocks: 2
+  num_blocks: [1,2,2,1]
+  num_refinement_blocks: 1
   channel_heads: [1,2,4,8]
   spatial_heads: [1,2,4,8]
   overlap_ratio: [0.5,0.5,0.5,0.5]

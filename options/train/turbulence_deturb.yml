@@ -9,6 +9,7 @@ padding_size: 16
 datasets:
   train:
     name: Turbulence
+    task: deturb
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/train_static
     filename_tmpl: '{}'
@@ -23,7 +24,7 @@ datasets:
     # data loader
     use_shuffle: true
     num_worker_per_gpu: 4
-    batch_size_per_gpu: 1
+    batch_size_per_gpu: 2
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
     pin_memory: false
@@ -31,7 +32,8 @@ datasets:
 
 
   val_1:
-    name: GoPro
+    name: Turb_test
+    task: test
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
     turb_size: 256
@@ -43,10 +45,9 @@ datasets:
 # network structures
 network_g:
   type: Wnet
-  inp_channels: 3
   dim: 48
-  num_blocks: [2,3,3,2]
-  num_refinement_blocks: 2
+  num_blocks: [1,2,2,1]
+  num_refinement_blocks: 1
   channel_heads: [1,2,4,8]
   spatial_heads: [1,2,4,8]
   overlap_ratio: [0.5,0.5,0.5,0.5]
@@ -56,8 +57,8 @@ network_g:
   bias: False
   LayerNorm_type: WithBias
   scale: 1
-  deturb_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/deblur_28.15_20w/models/net_g_200000.pth
-  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/detilt_26.1818/models/net_g_300000.pth
+  deturb_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/deblur28.2/models/net_g_200000.pth
+  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/detilt/models/net_g_300000.pth
 
 # path
 path:

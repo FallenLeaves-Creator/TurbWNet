@@ -4,6 +4,7 @@ import torch
 from basicsr.utils.registry import LOSS_REGISTRY
 from torch.autograd import Variable
 from math import exp
+import lpips
 
 @LOSS_REGISTRY.register()
 class ExampleLoss(nn.Module):
@@ -128,5 +129,20 @@ class MS_SSIM(torch.nn.Module):
             img2 = filtered_im2
 
         return torch.prod((msssim[levels-1]**weight[levels-1] * mcs[0:levels-1]**weight[0:levels-1]))
+
+@LOSS_REGISTRY.register()
+class Lpips_loss(torch.nn.Module):
+    def __init__(self, loss_weight = 1.0,net = 'alex'):
+        super(Lpips_loss, self).__init__()
+        self.weight = loss_weight
+        self.loss_fn = lpips.LPIPS(net=net)
+        self.loss_fn.requires_grad_=False
+
+    def forward(self, pred,target):
+
+
+
+        return self.weight*self.loss_fn(pred,target).mean()
+
 
 

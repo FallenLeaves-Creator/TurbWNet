@@ -262,7 +262,8 @@ class XRestormerModel(SRModel):
             gray_img_y_grad=tf.conv2d(gray_img,scharr_y,padding='same')
             self.lq=torch.cat((gray_img_x_grad,gray_img_y_grad),dim=1)
             self.tilt = data['tilt'].to(self.device)
-            self.tilt_field=data['tilt_field'].to(self.device)
+            if 'tilt_field' in data.keys():
+                self.tilt_field=data['tilt_field'].to(self.device)
         elif self.task=='deblur':
             self.lq = data['turb'].to(self.device)
             self.tilt = data['tilt'].to(self.device)

@@ -8,7 +8,17 @@ from basicsr.utils.registry import ARCH_REGISTRY
 from einops import rearrange
 import math
 from torchstat import stat
+import torch.nn.functional as tf
+import torchvision.transforms as transforms
+scharr_x = torch.tensor([
+    [-3, 0, 3],
+    [-10, 0, 10],
+    [-3, 0, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
 
+scharr_y = torch.tensor([
+    [-3, -10, -3],
+    [0, 0, 0],
+    [3, 10, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
 def to(x):
     return {'device': x.device, 'dtype': x.dtype}
 
@@ -421,7 +431,6 @@ class Wnet(nn.Module):
     def hook_fun(self, module, fea_in, fea_out):
         self.fea = fea_out
     def __init__(self,
-        inp_channels=3,
         dim = 48,
         num_blocks = [4,6,6,8],
         num_refinement_blocks = 4,
@@ -440,7 +449,7 @@ class Wnet(nn.Module):
 
         super(Wnet, self).__init__()
         print("Initializing Wnet")
-        self.deblur_model=XRestormer(inp_channels=inp_channels,
+        self.deblur_model=XRestormer(inp_channels=3,
         out_channels=3,
         dim=dim,
         num_blocks = num_blocks,
@@ -467,7 +476,7 @@ class Wnet(nn.Module):
 
         # self.deblur_model.requires_grad=False
 
-        self.detilt_model=XRestormer( inp_channels=inp_channels,
+        self.detilt_model=XRestormer( inp_channels=2,
         out_channels=2,
         dim=dim,
         num_blocks = num_blocks,
@@ -543,7 +552,11 @@ class Wnet(nn.Module):
 
     def forward(self, inp_img):
         deblur_result=self.deblur_model(inp_img)
-        detilt_flow=self.detilt_model(deblur_result)
+        gray_img= transforms.Grayscale()(deblur_result)
+        gray_img_x_grad=tf.conv2d(gray_img,scharr_x,padding='same')
+        gray_img_y_grad=tf.conv2d(gray_img,scharr_y,padding='same')
+        grad_deblur_result=torch.cat((gray_img_x_grad,gray_img_y_grad),dim=1)
+        detilt_flow=self.detilt_model(grad_deblur_result)
         # output=self.flow_warp(deblur_result,detilt_flow.permute(0,2,3,1))
         output=self.final_refine(self.flow_warp(self.deblur_Hook.fea,detilt_flow.permute(0,2,3,1)))
         return output

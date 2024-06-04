@@ -1,5 +1,5 @@
 # general settings
-name: xrestormer_deblur
+name: xrestormer_detilt
 model_type: XRestormerModel
 scale: 1
 num_gpu: 1
@@ -9,6 +9,7 @@ task: detilt
 # dataset and data loader settings
 datasets:
   test_1:
+    task: test
     name: DetiltResult
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
@@ -21,7 +22,7 @@ datasets:
 # network structures
 network_g:
   type: XRestormer
-  inp_channels: 3
+  inp_channels: 2
   out_channels: 2
   dim: 48
   num_blocks: [1,2,2,1]
