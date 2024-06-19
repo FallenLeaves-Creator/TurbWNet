@@ -6,6 +6,7 @@ num_gpu: 1
 manual_seed: 42
 padding_size: 16
 task: detilt
+
 # dataset and data loader settings
 datasets:
   train:
@@ -47,7 +48,7 @@ datasets:
 # network structures
 network_g:
   type: XRestormer
-  inp_channels: 2
+  inp_channels: 3
   out_channels: 2
   dim: 48
   num_blocks: [1,2,2,1]

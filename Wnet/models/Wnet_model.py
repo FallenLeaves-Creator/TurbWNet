@@ -30,7 +30,23 @@ import torch.nn.functional as tf
 
 @MODEL_REGISTRY.register()
 class Wnet(SRModel):
+    def __init__(self, opt):
+        super(SRModel, self).__init__(opt)
 
+        # define network
+        self.net_g = build_network(opt['network_g'])
+        self.net_g = self.model_to_device(self.net_g)
+        self.print_network(self.net_g)
+        if opt.get('task'):
+            self.task=opt.get('task',0)
+        # load pretrained models
+        load_path = self.opt['path'].get('pretrain_network_g', None)
+        if load_path is not None:
+            param_key = self.opt['path'].get('param_key_g', 'params')
+            self.load_network(self.net_g, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+
+        if self.is_train:
+            self.init_training_settings()
     def get_optimizer(self, optim_type, params, lr, **kwargs):
         if optim_type == 'Adam':
             optimizer = torch.optim.Adam(params, lr, **kwargs)
@@ -232,13 +248,13 @@ class Wnet(SRModel):
                 logger.warning(f'Params {k} will be quickly optimized.')
             else:
                 logger = get_root_logger()
-                trained_optim_params.append(v)
-                logger.warning(f'Params {k} will be slowly optimized.')
+                # trained_optim_params.append(v)
+                logger.warning(f'Params {k} will be slowly or not optimized.')
 
         optim_type = train_opt['optim_g'].pop('type')
         self.optimizer_g = self.get_optimizer(optim_type, refine_optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
-        self.optimizer_l = self.get_optimizer(optim_type, refine_optim_params, **train_opt['optim_g'])
+        self.optimizer_l = self.get_optimizer(optim_type, trained_optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_l)
 
 

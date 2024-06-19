@@ -257,10 +257,13 @@ class XRestormerModel(SRModel):
     def feed_data(self, data):
         if self.task=='detilt':
             bgr_img = data['tilt'].to(self.device)
-            gray_img= transforms.Grayscale()(bgr_img)
-            gray_img_x_grad=tf.conv2d(gray_img,scharr_x,padding='same')
-            gray_img_y_grad=tf.conv2d(gray_img,scharr_y,padding='same')
-            self.lq=torch.cat((gray_img_x_grad,gray_img_y_grad),dim=1)
+            ####  grad_2_channels      ##########
+            # gray_img= transforms.Grayscale()(bgr_img)
+            # gray_img_x_grad=tf.conv2d(gray_img,scharr_x,padding='same')
+            # gray_img_y_grad=tf.conv2d(gray_img,scharr_y,padding='same')
+            # self.lq=torch.cat((gray_img_x_grad,gray_img_y_grad),dim=1)
+            # self.lq=transforms.Grayscale()(bgr_img)
+            self.lq=bgr_img
             self.tilt = data['tilt'].to(self.device)
             if 'tilt_field' in data.keys():
                 self.tilt_field=data['tilt_field'].to(self.device)
@@ -302,6 +305,11 @@ class XRestormerModel(SRModel):
             self.cri_tilt_field = build_loss(train_opt['tilt_field_opt']).to(self.device)
         else:
             self.cri_tilt_field = None
+
+        if train_opt.get('MS_SSIM_opt'):
+            self.cri_MS_SSIM = build_loss(train_opt['MS_SSIM_opt']).to(self.device)
+        else:
+            self.cri_MS_SSIM = None
 
         if self.cri_pix is None and self.cri_tilt_field is None:
             raise ValueError('Both pixel and perceptual losses are None.')
@@ -399,8 +407,12 @@ class XRestormerModel(SRModel):
             # l_pix=l_pix/3
             ###########
             elif self.task=='deblur':
-                l_pix=self.cri_pix(self.output,self.tilt)
-                loss_dict['tilt_l_pix'] = l_pix
+                l_pix_1=self.cri_pix(self.output,self.tilt)
+                l_pix_2=self.cri_MS_SSIM(self.output,self.tilt)
+                l_pix = l_pix_1+l_pix_2
+                loss_dict['blur_l_pix_1'] = l_pix_1
+                loss_dict['blur_l_pix_2'] = l_pix_2
+                loss_dict['blur_l_pix'] = l_pix
             else:
                 l_pix=0
 
