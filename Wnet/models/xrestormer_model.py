@@ -393,7 +393,7 @@ class XRestormerModel(SRModel):
                     # tilted_gt=self.flow_warp(self.gt, -tilt_map)
                     # l_pix_2 = self.cri_pix(tilted_gt,self.tilt)
                     # l_pix=0.5*l_pix_1+0.5*l_pix_2
-                loss_dict['tilt_l_pix_1'] = l_pix_1
+                loss_dict['tilt_field_pix_1'] = l_pix_1
                 loss_dict['tilt_l_pix_2'] = l_pix_2
                 loss_dict['tilt_l_pix'] = l_pix
             ######  grad diff map loss####################
@@ -407,6 +407,19 @@ class XRestormerModel(SRModel):
             # l_pix=l_pix/3
             ###########
             elif self.task=='deblur':
+
+                # fft_gt=torch.fft.fft2(self.tilt)
+                # fft_b=torch.fft.fft2(self.lq)
+
+                # pred_fft_psf = torch.complex(self.output[:,0:3,...], self.output[:,3:6,...])
+                # pred_b=pred_fft_psf*fft_gt
+                # pred_combined_tensor = torch.stack([pred_b.real, pred_b.imag], dim=-1)
+                # fft_b_combined_tensor = torch.stack([fft_b.real, fft_b.imag], dim=-1)
+                # l_pix_1=self.cri_pix(pred_combined_tensor,fft_b_combined_tensor)
+                # pred_ffr_psf_conjugate=pred_fft_psf.conj()
+                # pred_output=pred_ffr_psf_conjugate*fft_b/(pred_ffr_psf_conjugate*pred_fft_psf+1)
+                # output_image=torch.fft.ifft2(pred_output).real
+                # l_pix_2=self.cri_MS_SSIM(output_image,self.tilt)
                 l_pix_1=self.cri_pix(self.output,self.tilt)
                 l_pix_2=self.cri_MS_SSIM(self.output,self.tilt)
                 l_pix = l_pix_1+l_pix_2

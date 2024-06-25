@@ -76,7 +76,7 @@ class Wnet(SRModel):
                 self.schedulers.append(lr_scheduler.MultiStepRestartLR(optimizer, **train_opt['scheduler']))
         elif scheduler_type == 'CosineContinousAnnealingRestartCyclicLR':
             self.schedulers.append(lr_scheduler.CosineContinousAnnealingRestartCyclicLR(self.optimizer_g, **train_opt['scheduler_g']))
-            self.schedulers.append(lr_scheduler.CosineContinousAnnealingRestartCyclicLR(self.optimizer_l, **train_opt['scheduler_l']))
+            # self.schedulers.append(lr_scheduler.CosineContinousAnnealingRestartCyclicLR(self.optimizer_l, **train_opt['scheduler_l']))
         else:
             raise NotImplementedError(f'Scheduler {scheduler_type} is not implemented yet.')
 
@@ -254,13 +254,13 @@ class Wnet(SRModel):
         optim_type = train_opt['optim_g'].pop('type')
         self.optimizer_g = self.get_optimizer(optim_type, refine_optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
-        self.optimizer_l = self.get_optimizer(optim_type, trained_optim_params, **train_opt['optim_g'])
-        self.optimizers.append(self.optimizer_l)
+        # self.optimizer_l = self.get_optimizer(optim_type, trained_optim_params, **train_opt['optim_g'])
+        # self.optimizers.append(self.optimizer_l)
 
 
     def optimize_parameters(self, current_iter):
         self.optimizer_g.zero_grad()
-        self.optimizer_l.zero_grad()
+        # self.optimizer_l.zero_grad()
         l_total = 0
         loss_dict = OrderedDict()
         with torch.cuda.amp.autocast():
@@ -271,7 +271,7 @@ class Wnet(SRModel):
 
         self.scaler.scale(l_total).backward()
         self.scaler.step(self.optimizer_g)
-        self.scaler.step(self.optimizer_l)
+        # self.scaler.step(self.optimizer_l)
         self.scaler.update()
 
 

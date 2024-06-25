@@ -12,7 +12,7 @@
             // "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "-opt","options/train/turbulence_deturb.yml",
+                "-opt","options/train/turbulence_deblur.yml",
             ]
         }
     ]

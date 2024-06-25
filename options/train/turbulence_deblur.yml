@@ -47,7 +47,7 @@ datasets:
 network_g:
   type: XRestormer
   inp_channels: 3
-  out_channels: 3
+  out_channels: 6
   dim: 48
   num_blocks: [1,2,2,1]
   num_refinement_blocks: 1
@@ -95,7 +95,8 @@ train:
   # losses
   pixel_opt:
     type: CharbonnierLoss
-    loss_weight: 0.5
+    # type: L1Loss
+    loss_weight: 1.0
     reduction: mean
 
   MS_SSIM_opt:
