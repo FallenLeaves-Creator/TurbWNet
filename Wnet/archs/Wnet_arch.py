@@ -1062,20 +1062,41 @@ class Wnet(nn.Module):
         #     refinement.append(TransformerBlock(dim=dim*2**1, window_size = window_size, overlap_ratio=overlap_ratio[0],  num_channel_heads=channel_heads[0], num_spatial_heads=spatial_heads[0], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type))
         # refinement.append(nn.Conv2d(dim*2**1,3,kernel_size=3, stride=1, padding=1, bias=bias))
         # self.final_refine = KAN([dim*2,dim,int(dim/2),3])
-        self.denoisy_model=XRestormer( inp_channels=3,
-        out_channels=3,
-        dim=dim,
-        num_blocks = num_blocks,
-        num_refinement_blocks = num_refinement_blocks,
-        channel_heads = channel_heads,
-        spatial_heads = spatial_heads,
-        overlap_ratio= overlap_ratio,
-        window_size = window_size,
-        spatial_dim_head = spatial_dim_head,
-        bias = bias,
-        ffn_expansion_factor = ffn_expansion_factor,
-        LayerNorm_type = LayerNorm_type,
-        scale = scale)
+
+
+        # self.denoisy_model=XRestormer( inp_channels=3,
+        # out_channels=3,
+        # dim=dim,
+        # num_blocks = num_blocks,
+        # num_refinement_blocks = num_refinement_blocks,
+        # channel_heads = channel_heads,
+        # spatial_heads = spatial_heads,
+        # overlap_ratio= overlap_ratio,
+        # window_size = window_size,
+        # spatial_dim_head = spatial_dim_head,
+        # bias = bias,
+        # ffn_expansion_factor = ffn_expansion_factor,
+        # LayerNorm_type = LayerNorm_type,
+        # scale = scale)
+
+
+        ## denoisy decoder ##
+        self.down3_4 = Downsample(int(dim*2**2)) ## From Level 3 to Level 4
+        self.latent = nn.Sequential(*[TransformerBlock(dim=int(dim*2**3), window_size = window_size, overlap_ratio=overlap_ratio[3],  num_channel_heads=channel_heads[3], num_spatial_heads=spatial_heads[3], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[3])])
+
+        self.up4_3 = Upsample(int(dim*2**3)) ## From Level 4 to Level 3
+        self.reduce_chan_level3 = nn.Conv2d(int(dim*2**3), int(dim*2**2), kernel_size=1, bias=bias)
+        self.decoder_level3 = nn.Sequential(*[TransformerBlock(dim=int(dim*2**2), window_size = window_size, overlap_ratio=overlap_ratio[2],  num_channel_heads=channel_heads[2], num_spatial_heads=spatial_heads[2], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[2])])
+
+
+        self.up3_2 = Upsample(int(dim*2**2)) ## From Level 3 to Level 2
+        self.reduce_chan_level2 = nn.Conv2d(int(dim*2**2), int(dim*2**1), kernel_size=1, bias=bias)
+        self.decoder_level2 = nn.Sequential(*[TransformerBlock(dim=int(dim*2**1), window_size = window_size, overlap_ratio=overlap_ratio[1],  num_channel_heads=channel_heads[1], num_spatial_heads=spatial_heads[1], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[1])])
+
+        self.up2_1 = Upsample(int(dim*2**1))  ## From Level 2 to Level 1  (NO 1x1 conv to reduce channels)
+
+        self.decoder_level1 = nn.Sequential(*[TransformerBlock(dim=int(dim*2**1), window_size = window_size, overlap_ratio=overlap_ratio[0],  num_channel_heads=channel_heads[0], num_spatial_heads=spatial_heads[0], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0])])
+
         # self.final_refine=nn.Sequential(
         #     nn.PixelShuffle(2),
         #     nn.Conv2d(int(dim/2),3,kernel_size=3, stride=1, padding=1, bias=bias)

@@ -47,7 +47,7 @@ datasets:
 network_g:
   type: XRestormer
   inp_channels: 3
-  out_channels: 6
+  out_channels: 3
   dim: 48
   num_blocks: [1,2,2,1]
   num_refinement_blocks: 1
@@ -104,8 +104,8 @@ train:
     # window_size: 32
     # size_average: True
     # channel: 3
-    type: Lpips_loss
-    loss_weight: 0.5
+    type: ReconstructPerceptualLoss
+    loss_weight: 0.1
 
   # perceptual_opt:
   #   type: PerceptualLoss

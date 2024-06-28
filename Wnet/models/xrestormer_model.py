@@ -421,10 +421,12 @@ class XRestormerModel(SRModel):
                 # output_image=torch.fft.ifft2(pred_output).real
                 # l_pix_2=self.cri_MS_SSIM(output_image,self.tilt)
                 l_pix_1=self.cri_pix(self.output,self.tilt)
-                l_pix_2=self.cri_MS_SSIM(self.output,self.tilt)
-                l_pix = l_pix_1+l_pix_2
                 loss_dict['blur_l_pix_1'] = l_pix_1
-                loss_dict['blur_l_pix_2'] = l_pix_2
+                l_pix = l_pix_1
+                if self.cri_MS_SSIM:
+                    l_pix_2=self.cri_MS_SSIM(self.output,self.tilt)
+                    l_pix += l_pix_2
+                    loss_dict['blur_l_pix_2'] = l_pix_2
                 loss_dict['blur_l_pix'] = l_pix
             else:
                 l_pix=0
