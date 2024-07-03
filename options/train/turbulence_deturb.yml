@@ -57,13 +57,13 @@ network_g:
   bias: False
   LayerNorm_type: WithBias
   scale: 1
-  deblur_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/deblur/models/net_g_500000.pth
-  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/detilt_3_channal_26/models/net_g_300000.pth
+  deblur_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/TPL_deblur/models/net_g_500000.pth
+  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/detilt_3_channal_26/models/net_g_300000.pth
 
 # path
 path:
   resume_state: ~
-  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/xrestormer_deblur/visualization
+  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/Unet_deblur/visualization
 
 # training settings
 train:
@@ -75,11 +75,11 @@ train:
   scheduler:
     type: CosineContinousAnnealingRestartCyclicLR
   scheduler_g:
-    periods: [5000, 50000,300000]
+    periods: [5000, 200000,300000]
     restart_weights: [1,1,1]
-    eta_mins: [0.00005,0.00001,0.000001]
+    eta_mins: [0.0001,0.00005,0.000001]
   scheduler_l:
-    periods: [5000,50000,300000]
+    periods: [5000,200000,300000]
     restart_weights: [1,1,1]
     eta_mins: [0.0000005,0.0000001,0.00000001]
 
@@ -96,6 +96,10 @@ train:
     type: CharbonnierLoss
     loss_weight: 1.0
     reduction: mean
+
+  perceptual_opt:
+    type: ReconstructPerceptualLoss
+    loss_weight: 0.1
 
 
 # validation settings
@@ -124,7 +128,7 @@ logger:
   wandb:
     # project: ~
     # resume_id: ~
-    project: backbone
+    project: Turb_remove
     resume_id:
     entity: xpixel-ntire2022
 

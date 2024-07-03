@@ -331,7 +331,7 @@ class SR_Upsample(nn.Sequential):
 ##########################################################################
 
 @ARCH_REGISTRY.register()
-class XRestormer(nn.Module):
+class Unet(nn.Module):
     def __init__(self,
         inp_channels=3,
         out_channels=3,
@@ -349,8 +349,8 @@ class XRestormer(nn.Module):
         scale = 1
     ):
 
-        super(XRestormer, self).__init__()
-        print("Initializing XRestormer")
+        super(Unet, self).__init__()
+        print("Initializing Unet")
         self.scale = scale
 
         self.patch_embed = OverlapPatchEmbed(inp_channels, dim)
@@ -1006,7 +1006,7 @@ class Wnet(nn.Module):
 
         super(Wnet, self).__init__()
         print("Initializing Wnet")
-        self.deblur_model=XRestormer(inp_channels=3,
+        self.deblur_model=Unet(inp_channels=3,
         out_channels=3,
         dim=dim,
         num_blocks = num_blocks,
@@ -1025,17 +1025,32 @@ class Wnet(nn.Module):
             self.deblur_model.load_state_dict(
                 torch.load(deblur_path)["params"]
             )
-
-
+        self.fea_hooks=[]
+        count=0
+        ind=0
         for n, m in self.deblur_model.named_modules():
-            if n.endswith("refinement"):
-                self.deblur_Hook = HookTool()
-                m.register_forward_hook(self.deblur_Hook.hook_fun)
+            if n.endswith(".spatial_ffn.project_out") and n.startswith("encoder"):
+                count+=1
+                if count == num_blocks[ind]:
+                    print(f'{n} is hooked')
+                    deblur_Hook = HookTool()
+                    m.register_forward_hook(deblur_Hook.hook_fun)
+                    self.fea_hooks.append(deblur_Hook)
+                    ind+=1
+                    count=0
+            elif n.endswith(".spatial_ffn.project_out")  and n.startswith('latent'):
+                print(f'{n} is hooked')
+                deblur_Hook = HookTool()
+                m.register_forward_hook(deblur_Hook.hook_fun)
+                self.fea_hooks.append(deblur_Hook)
+                count+=1
+        print(f"{len(self.fea_hooks)} feas are hooked")
 
-        self.deblur_model.requires_grad_=False
-        self.deblur_model.eval()
+        # self.deblur_model.eval()
+        # for param in self.deblur_model.parameters():
+        #     param.requires_grad = False
 
-        self.detilt_model=XRestormer( inp_channels=3,
+        self.detilt_model=Unet( inp_channels=3,
         out_channels=2,
         dim=dim,
         num_blocks = num_blocks,
@@ -1055,16 +1070,14 @@ class Wnet(nn.Module):
                 torch.load(detilt_path)["params"]
             )
 
-        self.detilt_model.requires_grad_=False
-
-        # refinement=[]
-        # for i in range(num_refinement_blocks):
-        #     refinement.append(TransformerBlock(dim=dim*2**1, window_size = window_size, overlap_ratio=overlap_ratio[0],  num_channel_heads=channel_heads[0], num_spatial_heads=spatial_heads[0], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type))
-        # refinement.append(nn.Conv2d(dim*2**1,3,kernel_size=3, stride=1, padding=1, bias=bias))
-        # self.final_refine = KAN([dim*2,dim,int(dim/2),3])
+        # self.detilt_model.eval()
+        # for param in self.detilt_model.parameters():
+        #     param.requires_grad = False
 
 
-        # self.denoisy_model=XRestormer( inp_channels=3,
+
+
+        # self.denoisy_model=Unet( inp_channels=3,
         # out_channels=3,
         # dim=dim,
         # num_blocks = num_blocks,
@@ -1097,6 +1110,10 @@ class Wnet(nn.Module):
 
         self.decoder_level1 = nn.Sequential(*[TransformerBlock(dim=int(dim*2**1), window_size = window_size, overlap_ratio=overlap_ratio[0],  num_channel_heads=channel_heads[0], num_spatial_heads=spatial_heads[0], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0])])
 
+
+        self.refinement = nn.Sequential(*[TransformerBlock(dim=int(dim*2**1), window_size = window_size, overlap_ratio=overlap_ratio[0],  num_channel_heads=channel_heads[0], num_spatial_heads=spatial_heads[0], spatial_dim_head = spatial_dim_head, ffn_expansion_factor=ffn_expansion_factor, bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_refinement_blocks)])
+
+        self.output = nn.Conv2d(int(dim*2**1), 3, kernel_size=3, stride=1, padding=1, bias=bias)
         # self.final_refine=nn.Sequential(
         #     nn.PixelShuffle(2),
         #     nn.Conv2d(int(dim/2),3,kernel_size=3, stride=1, padding=1, bias=bias)
@@ -1151,8 +1168,36 @@ class Wnet(nn.Module):
         # gray_img_x_grad=tf.conv2d(gray_img,scharr_x,padding='same')
         # gray_img_y_grad=tf.conv2d(gray_img,scharr_y,padding='same')
         # grad_deblur_result=torch.cat((gray_img_x_grad,gray_img_y_grad),dim=1)
-        detilt_flow=self.detilt_model(deblur_result)
-        output=self.flow_warp(deblur_result,detilt_flow.permute(0,2,3,1))
-        output=self.denoisy_model(output)
+        detilt_flow_1 = self.detilt_model(deblur_result)
+        detilt_flow_2 = F.interpolate(detilt_flow_1, scale_factor=0.5, mode='bilinear', align_corners=False)
+        detilt_flow_3 = F.interpolate(detilt_flow_1, scale_factor=0.25, mode='bilinear', align_corners=False)
+        detilt_flow_4 = F.interpolate(detilt_flow_1, scale_factor=0.125, mode='bilinear', align_corners=False)
+
+
+        # output=self.flow_warp(deblur_result,detilt_flow.permute(0,2,3,1))
+        out_enc_level1,out_enc_level2,out_enc_level3,latent=self.fea_hooks
+
+        out_enc_level1=self.flow_warp(out_enc_level1.fea,detilt_flow_1.permute(0,2,3,1))
+        out_enc_level2=self.flow_warp(out_enc_level2.fea,detilt_flow_2.permute(0,2,3,1))
+        out_enc_level3=self.flow_warp(out_enc_level3.fea,detilt_flow_3.permute(0,2,3,1))
+        latent=self.flow_warp(latent.fea,detilt_flow_4.permute(0,2,3,1))
+
+
+        inp_dec_level3 = self.up4_3(latent)
+        inp_dec_level3 = torch.cat([inp_dec_level3, out_enc_level3], 1)
+        inp_dec_level3 = self.reduce_chan_level3(inp_dec_level3)
+        out_dec_level3 = self.decoder_level3(inp_dec_level3)
+
+        inp_dec_level2 = self.up3_2(out_dec_level3)
+        inp_dec_level2 = torch.cat([inp_dec_level2, out_enc_level2], 1)
+        inp_dec_level2 = self.reduce_chan_level2(inp_dec_level2)
+        out_dec_level2 = self.decoder_level2(inp_dec_level2)
+
+        inp_dec_level1 = self.up2_1(out_dec_level2)
+        inp_dec_level1 = torch.cat([inp_dec_level1, out_enc_level1], 1)
+        out_dec_level1 = self.decoder_level1(inp_dec_level1)
+
+        denoise = self.refinement(out_dec_level1)
+        output = self.output(denoise)
         # output=self.final_refine(self.flow_warp(self.deblur_Hook.fea,detilt_flow.permute(0,2,3,1)).permute(0,2,3,1)).permute(0,3,1,2)
         return output

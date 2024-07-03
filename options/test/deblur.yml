@@ -1,5 +1,5 @@
-name: 003_xrestormer_deblur
-model_type: XRestormerModel
+name: 003_Unet_deblur
+model_type: UnetModel
 scale: 1
 num_gpu: 1
 manual_seed: 123
@@ -10,15 +10,15 @@ datasets:
   test_1:
     name: GoPro
     type: PairedImageDataset
-    dataroot_gt: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/datasets/val_set/gt
-    dataroot_lq: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/datasets/val_set/blur
+    dataroot_gt: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/datasets/val_set/gt
+    dataroot_lq: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/datasets/val_set/blur
     io_backend:
       # type: lmdb
       type: disk
 
 # network structures
 network_g:
-  type: XRestormer
+  type: Unet
   inp_channels: 3
   out_channels: 3
   dim: 48
@@ -37,7 +37,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/xrestormer_deblur_archived_20240418_150249/models/net_g_latest.pth
+  pretrain_network_g: experiments/Unet_deblur_archived_20240418_150249/models/net_g_latest.pth
   strict_load_g: true
   resume_state: ~
 # validation settings

@@ -318,7 +318,7 @@ class WelschLoss(torch.nn.Module):
         return self.alpha2*(1-torch.exp(-(img1-img2)^2/(self.alpha2*2)))
 
 class MaskedAutoencoderViT(nn.Module):
-    """ Masked Autoencoder with VisionTransformer backbone
+    """ Masked Autoencoder with VisionTransformer Turb_remove
     """
 
     def __init__(self, img_size=224, patch_size=16, in_chans=3,

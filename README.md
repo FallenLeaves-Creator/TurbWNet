@@ -1,12 +1,12 @@
-# X-Restormer [[Paper Link]](https://arxiv.org/abs/2310.11881) 
+# Unet [[Paper Link]](https://arxiv.org/abs/2310.11881)
 
-### A Comparative Study of Image Restoration Networks for General Backbone Network Design
+### A Comparative Study of Image Restoration Networks for General Turb_remove Network Design
 [Xiangyu Chen*](https://chxy95.github.io/), [Zheyuan Li*](https://xiaom233.github.io/), [Yuandong Pu*](https://andrew0613.github.io/),[Yihao Liu](https://scholar.google.com/citations?user=WRIYcNwAAAAJ&hl=zh-CN&oi=ao), [Jiantao Zhou](https://www.fst.um.edu.mo/personal/jtzhou/), [Yu Qiao](https://mmlab.siat.ac.cn/yuqiao) and [Chao Dong](https://scholar.google.com.hk/citations?user=OSDCB0UAAAAJ&hl=zh-CN)
 
 #### BibTeX
 
     @article{chen2023comparative,
-      title={A Comparative Study of Image Restoration Networks for General Backbone Network Design}, 
+      title={A Comparative Study of Image Restoration Networks for General Turb_remove Network Design},
       author={Chen, Xiangyu and Li, Zheyuan and Pu, Yuandong and Liu, Yihao and Zhou, Jiantao and Qiao, Yu and Dong, Chao},
       journal={arXiv preprint arXiv:2310.11881},
       year={2023}
@@ -60,11 +60,11 @@ python setup.py develop
 [Google Drive](https://drive.google.com/drive/folders/16WxegSAN_sescgrfW4ZMO4b6TcR_7T24?usp=share_link) or [Baidu Netdisk](https://pan.baidu.com/s/1OvyRe6u08HXFQI8NACOhdg?pwd=im3q) (access code: im3q).
 - Then run the following codes (taking `sr_300k.pth` as an example):
 ```
-python xrestormer/test.py -opt options/test/001_xrestormer_sr.yml
+python Unet/test.py -opt options/test/001_Unet_sr.yml
 ```
 The testing results will be saved in the `./results` folder.
 
-- Refer to `./options/test/001_xrestormer_sr.yml` for **inference** without the ground truth image.
+- Refer to `./options/test/001_Unet_sr.yml` for **inference** without the ground truth image.
 
 
 ## How To Train
@@ -72,7 +72,7 @@ The testing results will be saved in the `./results` folder.
 - Preparation of training data can refer to [this page](https://github.com/XPixelGroup/BasicSR/blob/master/docs/DatasetPreparation.md). ImageNet dataset can be downloaded at the [official website](https://image-net.org/challenges/LSVRC/2012/2012-downloads.php).
 - The training command is like
 ```
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 --master_port=1231 xrestormer/train.py -opt ./options/train/001_xrestormer_sr.yml --launcher pytorch
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 --master_port=1231 Unet/train.py -opt ./options/train/001_Unet_sr.yml --launcher pytorch
 ```
 - Note that the default batch size per GPU is 4, which will cost about 60G memory for each GPU.
 

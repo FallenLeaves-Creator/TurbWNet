@@ -1,5 +1,5 @@
 name: deblur_static
-model_type: XRestormerModel
+model_type: UnetModel
 scale: 1
 num_gpu: 1
 manual_seed: 123
@@ -17,7 +17,7 @@ datasets:
 
 # network structures
 network_g:
-  type: XRestormer
+  type: Unet
   inp_channels: 3
   out_channels: 3
   dim: 48
@@ -36,7 +36,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/xrestormer_deblur/models/net_g_200000.pth
+  pretrain_network_g: experiments/Unet_deblur/models/net_g_200000.pth
   strict_load_g: true
   resume_state: ~
 # validation settings

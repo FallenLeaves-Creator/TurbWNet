@@ -76,7 +76,7 @@ class Wnet(SRModel):
                 self.schedulers.append(lr_scheduler.MultiStepRestartLR(optimizer, **train_opt['scheduler']))
         elif scheduler_type == 'CosineContinousAnnealingRestartCyclicLR':
             self.schedulers.append(lr_scheduler.CosineContinousAnnealingRestartCyclicLR(self.optimizer_g, **train_opt['scheduler_g']))
-            # self.schedulers.append(lr_scheduler.CosineContinousAnnealingRestartCyclicLR(self.optimizer_l, **train_opt['scheduler_l']))
+            self.schedulers.append(lr_scheduler.CosineContinousAnnealingRestartCyclicLR(self.optimizer_l, **train_opt['scheduler_l']))
         else:
             raise NotImplementedError(f'Scheduler {scheduler_type} is not implemented yet.')
 
@@ -242,36 +242,42 @@ class Wnet(SRModel):
         refine_optim_params = []
         trained_optim_params= []
         for k, v in self.net_g.named_parameters():
-            if k.split('.')[0]!='deblur_model' and k.split('.')[0]!='detilt_model':
+            # if k.split('.')[0]!='deblur_model' and k.split('.')[0]!='detilt_model':
+            if k.split('.')[0]!='detilt_model':
                 logger = get_root_logger()
                 refine_optim_params.append(v)
                 logger.warning(f'Params {k} will be quickly optimized.')
             else:
                 logger = get_root_logger()
-                # trained_optim_params.append(v)
+                trained_optim_params.append(v)
                 logger.warning(f'Params {k} will be slowly or not optimized.')
 
         optim_type = train_opt['optim_g'].pop('type')
         self.optimizer_g = self.get_optimizer(optim_type, refine_optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
-        # self.optimizer_l = self.get_optimizer(optim_type, trained_optim_params, **train_opt['optim_g'])
-        # self.optimizers.append(self.optimizer_l)
+        self.optimizer_l = self.get_optimizer(optim_type, trained_optim_params, **train_opt['optim_g'])
+        self.optimizers.append(self.optimizer_l)
 
 
     def optimize_parameters(self, current_iter):
         self.optimizer_g.zero_grad()
-        # self.optimizer_l.zero_grad()
+        self.optimizer_l.zero_grad()
         l_total = 0
         loss_dict = OrderedDict()
         with torch.cuda.amp.autocast():
             self.output = self.net_g(self.lq)
             l_pix=self.cri_pix(self.output,self.gt)
-            loss_dict['tilt_l_pix'] = l_pix
+            l_perceptal=self.cri_perceptual(self.output,self.gt)
+            loss_dict['l_pix'] = l_pix
             l_total += l_pix
+            loss_dict['l_perceptual']=l_perceptal
+            l_total +=l_perceptal
+            loss_dict['l_total']=l_total
+
 
         self.scaler.scale(l_total).backward()
         self.scaler.step(self.optimizer_g)
-        # self.scaler.step(self.optimizer_l)
+        self.scaler.step(self.optimizer_l)
         self.scaler.update()
 
 

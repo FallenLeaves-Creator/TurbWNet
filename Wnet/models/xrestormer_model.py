@@ -30,7 +30,7 @@ scharr_y = torch.tensor([
 
 
 @MODEL_REGISTRY.register()
-class XRestormerModel(SRModel):
+class UnetModel(SRModel):
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
         if optim_type == 'Adam':

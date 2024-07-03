@@ -33,15 +33,15 @@ network_g:
   LayerNorm_type: WithBias
   dual_pixel_task: False
   scale: 1
-  deturb_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/deblur_28.15_20w/models/net_g_200000.pth
-  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/detilt_26.1818/models/net_g_300000.pth
+  deturb_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/deblur_28.15_20w/models/net_g_200000.pth
+  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/detilt_26.1818/models/net_g_300000.pth
 
 
 # path
 path:
   strict_load_g: false
   resume_state: ~
-  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/xrestormer_deblur/visualization
+  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/Unet_deblur/visualization
 
 
 val:

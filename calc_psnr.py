@@ -3,7 +3,7 @@ import collections
 import numpy as np
 
 root="/media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/results/Turbulence_removal/visualization/Turb"
-# root="/media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/results/Turbulence_removal_archived_20240522_091749/visualization/Turb"
+# root="/media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/results/Turbulence_removal_archived_20240522_091749/visualization/Turb"
 filename=collections.OrderedDict()
 for file in os.listdir(root):
     name_list=file.split('_')

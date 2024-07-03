@@ -1,6 +1,6 @@
 # general settings
 name: detilt
-model_type: XRestormerModel
+model_type: UnetModel
 scale: 1
 num_gpu: 1
 manual_seed: 42
@@ -47,7 +47,7 @@ datasets:
 
 # network structures
 network_g:
-  type: XRestormer
+  type: Unet
   inp_channels: 3
   out_channels: 2
   dim: 48
@@ -66,7 +66,7 @@ network_g:
 # path
 path:
   resume_state: ~
-  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/X-Restormer/experiments/xrestormer_deblur/visualization
+  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/Unet_deblur/visualization
 
 # training settings
 train:
@@ -124,7 +124,7 @@ logger:
   wandb:
     # project: ~
     # resume_id: ~
-    project: backbone
+    project: Turb_remove
     resume_id:
     entity: xpixel-ntire2022
 
