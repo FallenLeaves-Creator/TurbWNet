@@ -767,7 +767,7 @@ class VSSM(nn.Module):
         return x
 
 
-
+@ARCH_REGISTRY.register()
 class VMUNet(nn.Module):
     def __init__(self,
                  input_channels=3,
