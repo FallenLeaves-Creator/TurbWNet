@@ -10,15 +10,15 @@ import math
 from torchstat import stat
 import torch.nn.functional as tf
 import torchvision.transforms as transforms
-scharr_x = torch.tensor([
-    [-3, 0, 3],
-    [-10, 0, 10],
-    [-3, 0, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
+# scharr_x = torch.tensor([
+#     [-3, 0, 3],
+#     [-10, 0, 10],
+#     [-3, 0, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
 
-scharr_y = torch.tensor([
-    [-3, -10, -3],
-    [0, 0, 0],
-    [3, 10, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
+# scharr_y = torch.tensor([
+#     [-3, -10, -3],
+#     [0, 0, 0],
+#     [3, 10, 3]]).float().unsqueeze(0).unsqueeze(0).to(device='cuda')
 def to(x):
     return {'device': x.device, 'dtype': x.dtype}
 

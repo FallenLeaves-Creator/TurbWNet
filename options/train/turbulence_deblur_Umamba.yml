@@ -1,30 +1,31 @@
 # general settings
-name: Turbulence_removal
-model_type: Wnet
+name: deblur
+model_type: UnetModel
 scale: 1
 num_gpu: 1
 manual_seed: 123
 padding_size: 16
+task: deblur
 # dataset and data loader settings
 datasets:
   train:
+    task: deblur
     name: Turbulence
-    task: deturb
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/train_static
     filename_tmpl: '{}'
     io_backend:
       # type: lmdb
       type: disk
-    turb_size: 256
-    gt_size: 256
+    turb_size: 512
+    gt_size: 512
     use_hflip: true
     use_rot: true
 
     # data loader
     use_shuffle: true
-    num_worker_per_gpu: 4
-    batch_size_per_gpu: 2
+    num_worker_per_gpu: 16
+    batch_size_per_gpu: 4
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
     pin_memory: false
@@ -32,41 +33,36 @@ datasets:
 
 
   val_1:
-    name: Turb_test
     task: test
+    name: TurbTest
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
-    turb_size: 256
-    gt_size: 256
+    turb_size: 512
+    gt_size: 512
     io_backend:
       type: disk
 
 
+
+
 # network structures
 network_g:
-  type: Wnet
-  dim: 48
-  num_blocks: [1,2,2,1]
-  num_refinement_blocks: 1
-  channel_heads: [1,2,4,8]
-  spatial_heads: [1,2,4,8]
-  overlap_ratio: [0.5,0.5,0.5,0.5]
-  window_size: 8
-  spatial_dim_head: 16
-  ffn_expansion_factor: 2.66
-  bias: False
-  LayerNorm_type: WithBias
-  scale: 1
-  deblur_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/TPL_deblur/models/net_g_500000.pth
-  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/detilt_3_channal_26/models/net_g_300000.pth
+  type: vmunet
+  num_classes: 3
+  input_channels: 3
+  # ----- VM-UNet ----- #
+  depths: [2,2,2,2]
+  depths_decoder: [2,2,2,1]
+  drop_path_rate: 0.2
 
 # path
 path:
+  strict_load_g: false
   resume_state: ~
-  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/Unet_deblur/visualization
 
 # training settings
 train:
+
   optim_g:
     type: AdamW
     lr: !!float 1e-6
@@ -74,38 +70,38 @@ train:
 
   scheduler:
     type: CosineContinousAnnealingRestartCyclicLR
-  scheduler_g:
-    periods: [5000, 600000,1000000]
+    periods: [20000, 280000,300000]
     restart_weights: [1,1,1]
     eta_mins: [0.0001,0.00005,0.000001]
-  scheduler_l:
-    periods: [5000,600000,1000000]
-    restart_weights: [1,1,1]
-    eta_mins: [0.00005,0.00001,0.0000001]
 
   mixing_augs:
     mixup: false
     mixup_beta: 1.2
     use_identity: true
 
-  total_iter: 1000000
+  total_iter: 300000
   warmup_iter: -1  # no warm up
 
   # losses
   pixel_opt:
     type: CharbonnierLoss
-    loss_weight: 1.0
+    # type: L1Loss
+    loss_weight: 0.9
     reduction: mean
 
-  perceptual_opt:
-    type: ReconstructPerceptualLoss
-    loss_weight: 0.01
+  # MS_SSIM_opt:
+  #   type: MSSSIM
+  #   window_size: 32
+  #   size_average: True
+  #   channel: 3
+    # type: Lpips_loss
+    # loss_weight: 0.1
 
 
 # validation settings
 val:
   val_freq: !!float 1e5
-  save_img: True
+  save_img: false
   pbar: False
 
   metrics:
@@ -123,7 +119,7 @@ val:
 # logging settings
 logger:
   print_freq: 1000
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: !!float 5e4
   use_tb_logger: true
   wandb:
     # project: ~
