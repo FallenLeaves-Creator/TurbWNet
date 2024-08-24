@@ -5,7 +5,7 @@ import time
 import math
 from functools import partial
 from typing import Optional, Callable
-
+from basicsr.utils.registry import ARCH_REGISTRY
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

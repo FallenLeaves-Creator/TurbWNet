@@ -425,7 +425,7 @@ class UnetModel(SRModel):
                 l_pix = l_pix_1
                 if self.cri_MS_SSIM:
                     l_pix_2=self.cri_MS_SSIM(self.output,self.tilt)
-                    l_pix += l_pix_2
+                    l_pix = l_pix_1+l_pix_2
                     loss_dict['blur_l_pix_2'] = l_pix_2
                 loss_dict['blur_l_pix'] = l_pix
             else:

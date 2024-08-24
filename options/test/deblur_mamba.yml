@@ -1,0 +1,55 @@
+# general settings
+name: deblur_mamba
+model_type: UnetModel
+scale: 1
+num_gpu: 1
+manual_seed: 123
+padding_size: 64
+task: deblur
+# dataset and data loader settings
+datasets:
+  test_1:
+    task: test
+    name: MambaDeblurResult
+    type: TurbImageDataset
+    dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/test_static
+    turb_size: 256
+    gt_size: 256
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: VMUNet
+  num_classes: 3
+  input_channels: 3
+  # ----- VM-UNet ----- #
+  depths: [2,2,2,2]
+  depths_decoder: [2,2,2,1]
+  drop_path_rate: 0.2
+
+# path
+path:
+  pretrain_network_g: experiments/mamba_deblur/models/net_g_800000.pth
+  strict_load_g: true
+  resume_state: ~
+  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/mamba_detilt/visualization
+# validation settings
+val:
+  save_img: true
+  suffix: ~
+  pbar: true
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

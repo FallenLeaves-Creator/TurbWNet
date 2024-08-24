@@ -1,15 +1,15 @@
 # general settings
-name: trans_deblur
+name: mamba_detilt
 model_type: UnetModel
 scale: 1
 num_gpu: 1
-manual_seed: 123
+manual_seed: 42
 padding_size: 16
-task: deblur
+task: detilt
 # dataset and data loader settings
 datasets:
   train:
-    task: deblur
+    task: detilt
     name: Turbulence
     type: TurbImageDataset
     dataroot: /media/mayue/Data_8T_D/Projects/CVs_Datasets/static_new/train_static
@@ -19,8 +19,8 @@ datasets:
       type: disk
     turb_size: 256
     gt_size: 256
-    use_hflip: true
-    use_rot: true
+    use_hflip: False
+    use_rot: False
 
     # data loader
     use_shuffle: true
@@ -43,32 +43,23 @@ datasets:
       type: disk
 
 
+
+
 # network structures
 network_g:
-  type: Unet
-  inp_channels: 3
-  out_channels: 3
-  dim: 48
-  num_blocks: [1,2,2,1]
-  num_refinement_blocks: 1
-  channel_heads: [1,2,4,8]
-  spatial_heads: [1,2,4,8]
-  overlap_ratio: [0.5,0.5,0.5,0.5]
-  window_size: 8
-  spatial_dim_head: 16
-  ffn_expansion_factor: 2.66
-  bias: False
-  LayerNorm_type: WithBias
-  scale: 1
+  type: VMUNet
+  num_classes: 2
+  input_channels: 3
+  # ----- VM-UNet ----- #
+  depths: [2,2,2,2]
+  depths_decoder: [2,2,2,1]
+  drop_path_rate: 0.2
 
 # path
 path:
-  resume_state: ~
-  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/Unet_deblur/visualization
-
-path:
   strict_load_g: false
   resume_state: ~
+  visualization: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/mamba_detilt/visualization
 
 # training settings
 train:
@@ -80,40 +71,32 @@ train:
 
   scheduler:
     type: CosineContinousAnnealingRestartCyclicLR
-    periods: [20000, 480000,5000000]
+    periods: [20000, 980000,1000000]
     restart_weights: [1,1,1]
-    eta_mins: [0.0003,0.00005,0.000001]
+    eta_mins: [0.0001,0.00005,0.000001]
 
   mixing_augs:
     mixup: false
     mixup_beta: 1.2
     use_identity: true
 
-  total_iter: 500000
+  total_iter: 1000000
   warmup_iter: -1  # no warm up
 
   # losses
   pixel_opt:
     type: CharbonnierLoss
-    # type: L1Loss
-    loss_weight: 1.0
+    loss_weight: 0.2
     reduction: mean
-
-  MS_SSIM_opt:
-    # type: MSSSIM
-    # window_size: 32
-    # size_average: True
-    # channel: 3
-    type: ReconstructPerceptualLoss
-    loss_weight: 0.01
-
-  # perceptual_opt:
-  #   type: PerceptualLoss
+  tilt_field_opt:
+    type: CharbonnierLoss
+    loss_weight: 0.8
+    reduction: mean
 
 
 # validation settings
 val:
-  val_freq: !!float 5e5
+  val_freq: !!float 2e5
   save_img: false
   pbar: False
 
@@ -137,11 +120,10 @@ logger:
   wandb:
     # project: ~
     # resume_id: ~
-    project: deblur
+    project: mamba_detilt
     resume_id:
 
 # dist training settings
 dist_params:
   backend: nccl
   port: 29500
-

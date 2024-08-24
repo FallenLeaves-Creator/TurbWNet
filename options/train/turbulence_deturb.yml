@@ -57,8 +57,8 @@ network_g:
   bias: False
   LayerNorm_type: WithBias
   scale: 1
-  deblur_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/TPL_deblur/models/net_g_500000.pth
-  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/detilt_3_channal_26/models/net_g_300000.pth
+  deblur_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/trans_deblur/models/net_g_500000.pth
+  detilt_path: /media/mayue/Data_8T_D/Projects/ZhangXiao/Unet/experiments/trans_detilt/models/net_g_600000.pth
 
 # path
 path:
@@ -77,11 +77,11 @@ train:
   scheduler_g:
     periods: [5000, 600000,1000000]
     restart_weights: [1,1,1]
-    eta_mins: [0.0001,0.00005,0.000001]
+    eta_mins: [0.0003,0.00001,0.000001]
   scheduler_l:
     periods: [5000,600000,1000000]
     restart_weights: [1,1,1]
-    eta_mins: [0.00005,0.00001,0.0000001]
+    eta_mins: [0.00001,0.000005,0.0000001]
 
   mixing_augs:
     mixup: false
@@ -104,7 +104,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 1e5
+  val_freq: !!float 2e5
   save_img: True
   pbar: False
 
@@ -123,7 +123,7 @@ val:
 # logging settings
 logger:
   print_freq: 1000
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: !!float 2e4
   use_tb_logger: true
   wandb:
     # project: ~

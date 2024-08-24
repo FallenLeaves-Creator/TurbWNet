@@ -1,5 +1,8 @@
 # flake8: noqa
 import os.path as osp
+import sys
+import os
+sys.path.append(os.getcwd())
 
 import Wnet.archs
 import Wnet.data

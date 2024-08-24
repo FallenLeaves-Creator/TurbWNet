@@ -243,20 +243,23 @@ class Wnet(SRModel):
         trained_optim_params= []
         for k, v in self.net_g.named_parameters():
             # if k.split('.')[0]!='deblur_model' and k.split('.')[0]!='detilt_model':
-            if k.split('.')[0]!='detilt_model':
-                logger = get_root_logger()
-                refine_optim_params.append(v)
-                logger.warning(f'Params {k} will be quickly optimized.')
-            else:
+            if k.split('.')[0]=='detilt_model':
+                continue
+            elif k.split('.')[0]=='deblur_model':
                 logger = get_root_logger()
                 trained_optim_params.append(v)
                 logger.warning(f'Params {k} will be slowly or not optimized.')
+            else:
+                logger = get_root_logger()
+                refine_optim_params.append(v)
+                logger.warning(f'Params {k} will be trained.')
 
         optim_type = train_opt['optim_g'].pop('type')
-        self.optimizer_g = self.get_optimizer(optim_type, refine_optim_params, **train_opt['optim_g'])
-        self.optimizers.append(self.optimizer_g)
         self.optimizer_l = self.get_optimizer(optim_type, trained_optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_l)
+        self.optimizer_g = self.get_optimizer(optim_type, refine_optim_params, **train_opt['optim_g'])
+        self.optimizers.append(self.optimizer_g)
+
 
 
     def optimize_parameters(self, current_iter):
