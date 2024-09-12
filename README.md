@@ -1,6 +1,8 @@
 
-![result of turbulenced image and restored image](./property/result.png "Results of the proposed single-frame turbulence restoration algorithm. Input image from heat-chamber and ATSyn-static dataset (top) and the restored images by our porposed TurbWNet (bottom).")
-
+<figure>
+    <img src="./property/result.png" alt="result of turbulenced image and restored image">
+    <figcaption>Results of the proposed single-frame turbulence restoration algorithm. Input image from heat-chamber and ATSyn-static dataset (top) and the restored images by our porposed TurbWNet (bottom).</figcaption>
+</figure>
 ## Environment
 1. cuda>=12 (not necessary)
 2. GPU memory>=12G
@@ -39,5 +41,9 @@ The training logs and weights will be saved in the `./experiments` folder.
 - Note that the default batch size per GPU is 1, which will cost about 16G memory for each GPU.
 
 ## Model Design
-![Model Modules](./property/modules.pdf "Network Structure.")
+<figure>
+    <img src="./property/modules.pdf" alt="Model Modules">
+    <figcaption>Network Structure.</figcaption>
+</figure>
+
 Deblur Process Module is a U-Net structure that enhances the clarity of the oblique image. Tilt Field Estimate Module is another U-Net structure that calculates the U and V offsets for each pixel in the camera coordinate system. Noise Reduction and Image Refinement Module is a decoder structure that further improves image quality. The Deblur Process Module produces a clearer oblique image, while the Tilt Field Estimation  Module generates a map of pixel offsets. These encoded features from the Deblur Process Module are then warped according to the Tilt Field and fed into the Noise Reduction and Image Refinement module for final processing.
