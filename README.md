@@ -42,13 +42,10 @@ The training logs and weights will be saved in the `./experiments` folder.
 2. Deturb tasl
 - Note that the default batch size per GPU is 1, which will cost about 16G memory for each GPU.
 
-## Model Design
+## Network Structure
 
 <figure style="display: inline-block; text-align: center;">
     <img src="./property/modules.png" alt="Model Modules" style="max-width: 100%;">
-    <figcaption style="font-size: 12px; color: #333; margin-top: 5px;">
-        <strong>Network Structure.</strong>
-    </figcaption>
 </figure>
 
 Deblur Process Module is a U-Net structure that enhances the clarity of the oblique image. Tilt Field Estimate Module is another U-Net structure that calculates the U and V offsets for each pixel in the camera coordinate system. Noise Reduction and Image Refinement Module is a decoder structure that further improves image quality. The Deblur Process Module produces a clearer oblique image, while the Tilt Field Estimation  Module generates a map of pixel offsets. These encoded features from the Deblur Process Module are then warped according to the Tilt Field and fed into the Noise Reduction and Image Refinement module for final processing.
