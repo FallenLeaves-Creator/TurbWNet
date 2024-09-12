@@ -41,8 +41,9 @@ The training logs and weights will be saved in the `./experiments` folder.
 - Note that the default batch size per GPU is 1, which will cost about 16G memory for each GPU.
 
 ## Model Design
-<figure>
-    <img src="./property/modules.png" alt="Model Modules">
+
+<figure style="display: inline-block; text-align: center;">
+    <img src="./property/modules.png" alt="Model Modules" style="max-width: 100%;">
     <figcaption style="font-size: 12px; color: #333; margin-top: 5px;">
         <strong>Network Structure.</strong>
     </figcaption>
