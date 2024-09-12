@@ -52,3 +52,8 @@ The training logs and weights will be saved in the `./experiments` folder.
 </figure>
 
 Deblur Process Module is a U-Net structure that enhances the clarity of the oblique image. Tilt Field Estimate Module is another U-Net structure that calculates the U and V offsets for each pixel in the camera coordinate system. Noise Reduction and Image Refinement Module is a decoder structure that further improves image quality. The Deblur Process Module produces a clearer oblique image, while the Tilt Field Estimation  Module generates a map of pixel offsets. These encoded features from the Deblur Process Module are then warped according to the Tilt Field and fed into the Noise Reduction and Image Refinement module for final processing.
+
+<figure style="display: inline-block; text-align: center;">
+    <img src="./property/detailed.png" alt="Detailed Network Structure" style="max-width: 100%;">
+</figure>
+This is a more detailed version of the network architecture design diagram. The encoder and decoder for downsampling and upsampling can be set to NAFNET/mamba/transformer and other kind for different task. In our paper, transformer encoder and decoder presented the best performence. However, if you want to faster inference or consume less resources, NAFNET and mamba could be better choice.
