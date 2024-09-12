@@ -46,6 +46,8 @@ python Wnet/train.py -opt ./options/train/turbulence_deblur.yml
 python Wnet/train.py -opt ./options/train/turbulence_detilt.yml
 python Wnet/train.py -opt ./options/train/turbulence_deturb.yml
 '''
+
+
 Of course, you can also fine tune the network according to your preferences and the [pre trained model we provide](https://pan.baidu.com/s/1ZJA359Ia4W-WT5Rolm11mw?pwd=sv8d). However, this means that you need to modify the files in the options according to the corresponding rules.
 ## Resource consuption
 1. Deblur and Detilt task
