@@ -43,7 +43,9 @@ The training logs and weights will be saved in the `./experiments` folder.
 ## Model Design
 <figure>
     <img src="./property/modules.png" alt="Model Modules">
-    <figcaption>Network Structure.</figcaption>
+    <figcaption style="font-size: 12px; color: #333; margin-top: 5px;">
+        <strong>Network Structure.</strong>
+    </figcaption>
 </figure>
 
 Deblur Process Module is a U-Net structure that enhances the clarity of the oblique image. Tilt Field Estimate Module is another U-Net structure that calculates the U and V offsets for each pixel in the camera coordinate system. Noise Reduction and Image Refinement Module is a decoder structure that further improves image quality. The Deblur Process Module produces a clearer oblique image, while the Tilt Field Estimation  Module generates a map of pixel offsets. These encoded features from the Deblur Process Module are then warped according to the Tilt Field and fed into the Noise Reduction and Image Refinement module for final processing.
