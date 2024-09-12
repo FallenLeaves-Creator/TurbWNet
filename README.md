@@ -42,7 +42,7 @@ The training logs and weights will be saved in the `./experiments` folder.
 
 ## Model Design
 <figure>
-    <img src="./property/modules.pdf" alt="Model Modules">
+    <img src="./property/modules.png" alt="Model Modules">
     <figcaption>Network Structure.</figcaption>
 </figure>
 
