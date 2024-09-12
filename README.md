@@ -39,6 +39,14 @@ python Wnet/train.py -opt ./options/train/turbulence_deblur.yml
 
 The training logs and weights will be saved in the `./experiments` folder.
 
+The total training contains three tasks, including deblur process, tilt mesh estimation and noise reduction and image refinement. We stronglt recommend you train the netowrk in order, which means the train order could be like following.
+
+'''
+python Wnet/train.py -opt ./options/train/turbulence_deblur.yml
+python Wnet/train.py -opt ./options/train/turbulence_detilt.yml
+python Wnet/train.py -opt ./options/train/turbulence_deturb.yml
+'''
+Of course, you can also fine tune the network according to your preferences and the [pre trained model we provide](https://pan.baidu.com/s/1ZJA359Ia4W-WT5Rolm11mw?pwd=sv8d). However, this means that you need to modify the files in the options according to the corresponding rules.
 ## Resource consuption
 1. Deblur and Detilt task
 - Note that the default batch size per GPU is 4, which will cost about 16G memory for each GPU.
