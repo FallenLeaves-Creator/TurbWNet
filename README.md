@@ -1,3 +1,6 @@
+
+![image info](./property/results.png)
+Thats result.
 ## Environment
 1. cuda>=12 (not necessary)
 2. GPU memory>=12G
